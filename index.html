@@ -100,11 +100,10 @@
                     </div>
                 </div>
 
-                <!-- Payment Screenshot Upload (Not submitted to Apps Script, only for user record) -->
+                <!-- Payment Screenshot Upload (Now Mandatory) -->
                 <div>
-                    <label for="payment_proof" class="block text-sm font-medium text-gray-700 mb-1">Payment Proof (Optional, for fast verification)</label>
-                    <!-- IMPORTANT: The file upload won't be sent to Google Sheets via this method, but we include the field for customer documentation. The manual verification is the primary method. -->
-                    <input type="file" id="payment_proof" accept="image/*" class="w-full text-sm text-gray-500
+                    <label for="payment_proof" class="block text-sm font-medium text-gray-700 mb-1">Payment Proof (Required for verification)</label>
+                    <input type="file" id="payment_proof" name="payment_proof" accept="image/*" required class="w-full text-sm text-gray-500
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-full file:border-0
                         file:text-sm file:font-semibold
@@ -128,7 +127,7 @@
 
     <script>
         const UPI_ID = '9663798289@ybl';
-        const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbybWFfG7aTWAHpMsZiVv8lvbVVjih6pWAFzNlRfumzX9C_-EMHIHr64oXtLeVqndQxrkQ/exec'; // *** REPLACE THIS WITH YOUR DEPLOYED WEB APP URL ***
+        const APP_SCRIPT_URL = 'YOUR_WEB_APP_URL_HERE'; // *** REPLACE THIS WITH YOUR DEPLOYED WEB APP URL ***
         const ticketPrices = {
             stag: 3999,
             lady: 2499,
@@ -147,7 +146,6 @@
         function calculateTotal() {
             let total = 0;
             let totalTickets = 0;
-            let formValid = true;
 
             ticketCounts.forEach(input => {
                 const count = parseInt(input.value) || 0;
@@ -156,23 +154,24 @@
                 totalTickets += count;
             });
             
-            // Validation: Must select at least one ticket
-            if (totalTickets === 0) {
-                submitButton.setAttribute('disabled', 'true');
-                formValid = false;
-            } else {
-                 submitButton.removeAttribute('disabled');
-            }
-
-            // Validation: Must fill Name, Phone, Email
+            // Validation: Must fill Name, Phone, Email, select tickets, AND upload proof
             const nameInput = document.getElementById('name');
             const phoneInput = document.getElementById('phone');
             const emailInput = document.getElementById('email');
+            const fileInput = document.getElementById('payment_proof'); 
 
-            if (!nameInput.value || !phoneInput.value || !emailInput.value || totalTickets === 0) {
-                 submitButton.setAttribute('disabled', 'true');
-            } else {
+            // Check if all text fields are filled, at least one ticket is selected, and a file is uploaded
+            const isFormValid = 
+                nameInput.value && 
+                phoneInput.value && 
+                emailInput.value && 
+                totalTickets > 0 && 
+                fileInput.files.length > 0; // Check if a file is present
+
+            if (isFormValid) {
                  submitButton.removeAttribute('disabled');
+            } else {
+                 submitButton.setAttribute('disabled', 'true');
             }
 
 
@@ -184,11 +183,10 @@
         // Add event listeners for counting
         ticketCounts.forEach(input => {
             input.addEventListener('input', calculateTotal);
-            // Also ensure on load, if values are pre-filled, they are calculated
         });
         
-        // Add event listeners for text inputs to enable/disable button
-        ['name', 'phone', 'email'].forEach(id => {
+        // Add event listeners for text inputs and file input to enable/disable button
+        ['name', 'phone', 'email', 'payment_proof'].forEach(id => {
             document.getElementById(id).addEventListener('input', calculateTotal);
         });
 
@@ -196,48 +194,69 @@
         calculateTotal();
 
 
-        // --- Form Submission Logic ---
+        // --- Form Submission Logic (MODIFIED FOR FILE UPLOAD) ---
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
             
-            if (APP_SCRIPT_URL === 'YOUR_WEB_APP_URL_HERE') {
+            if (APP_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbybWFfG7aTWAHpMsZiVv8lvbVVjih6pWAFzNlRfumzX9C_-EMHIHr64oXtLeVqndQxrkQ/exec') {
                 showMessage('Error: Please deploy the Google Apps Script and update the APP_SCRIPT_URL.', 'bg-red-100 text-red-700 border-red-300');
                 return;
             }
 
+            // Re-run validation just in case the button was force-clicked
+            const totalTickets = parseInt(document.getElementById('total_tickets').value);
+            const fileInput = document.getElementById('payment_proof');
+            if (totalTickets === 0 || fileInput.files.length === 0) {
+                 showMessage('Please ensure all details are filled, at least one ticket is selected, and proof of payment is uploaded.', 'bg-red-100 text-red-700 border-red-300');
+                 return;
+            }
+
+
             submitButton.textContent = 'Submitting...';
             submitButton.setAttribute('disabled', 'true');
-            showMessage('Submitting your details...', 'bg-indigo-100 text-indigo-700 border-indigo-300');
+            showMessage('Submitting your details and proof of payment...', 'bg-indigo-100 text-indigo-700 border-indigo-300');
             
-            // Gather form data for submission
             const formData = new FormData(form);
-            const data = {};
-            for (let [key, value] of formData.entries()) {
-                // Ignore the file input (payment_proof) as files cannot be easily submitted to Apps Script doPost
-                if (key !== 'payment_proof') {
-                    data[key] = value;
-                }
-            }
+            const file = fileInput.files[0];
+
             
-            // Format for URL encoding
-            const urlEncodedData = new URLSearchParams(data).toString();
+            // Read the file asynchronously and convert it to Base64
+            const reader = new FileReader();
+            
+            // Return a promise to handle the async file reading
+            const fileReadPromise = new Promise((resolve, reject) => {
+                reader.onload = (e) => {
+                    // Extract base64 part and mimeType
+                    const base64Data = e.target.result.split(',')[1];
+                    formData.append('fileData', base64Data);
+                    formData.append('mimeType', file.type);
+                    formData.append('fileName', file.name);
+                    resolve();
+                };
+                reader.onerror = (error) => reject(error);
+                reader.readAsDataURL(file);
+            });
 
             try {
-                // Submit the data to the Google Apps Script Web App
+                await fileReadPromise;
+            } catch (error) {
+                console.error('File reading error:', error);
+                showMessage('Error reading file. Please try again.', 'bg-red-100 text-red-700 border-red-300');
+                submitButton.textContent = 'Submit Booking & Await Verification';
+                submitButton.removeAttribute('disabled');
+                return;
+            }
+            
+            try {
+                // Submit the raw FormData object. The browser automatically sets the correct headers.
                 const response = await fetch(APP_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // Essential for cross-domain submission to Apps Script
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: urlEncodedData
+                    mode: 'no-cors', 
+                    body: formData 
                 });
 
-                // Since we use 'no-cors', we can't inspect the response content, but a successful fetch usually means the data was sent.
                 showMessage(
-                    'Success! Your booking request has been submitted. Please check your email *after* transferring the amount (₹' + 
-                    totalAmountInput.value.toLocaleString('en-IN') + 
-                    ') to ' + UPI_ID + '. Your ticket will be emailed once payment is manually verified.',
+                    'Success! Your booking request has been submitted. We have received your payment proof. Your ticket will be emailed once payment is manually verified.',
                     'bg-green-100 text-green-700 border-green-300'
                 );
                 form.reset();
