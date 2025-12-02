@@ -158,6 +158,8 @@
         
         // Regex for strict 10-digit validation
         const phoneRegex = /^[0-9]{10}$/;
+        // New Regex for robust email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         
         // Error message elements
         const phoneError = document.getElementById('phoneError');
@@ -174,10 +176,13 @@
 
         function validatePhone() {
             const isValid = phoneRegex.test(phoneInput.value);
+            // Show error if the field has content BUT is not 10 digits
+            // We check length > 0 so that the error doesn't appear when the form is initially loaded (empty)
             if (phoneInput.value.length > 0 && !isValid) {
                 phoneError.classList.remove('hidden');
                 phoneInput.classList.add('border-red-500');
             } else {
+                // Hide error if empty OR valid
                 phoneError.classList.add('hidden');
                 phoneInput.classList.remove('border-red-500');
             }
@@ -185,12 +190,15 @@
         }
 
         function validateEmail() {
-            // Check HTML5 validity (covers email structure)
-            const isValid = emailInput.checkValidity();
+            // Use the new Regex for immediate feedback on input
+            const isValid = emailRegex.test(emailInput.value);
+
+            // Show error if the field has content BUT is not a valid email format
             if (emailInput.value.length > 0 && !isValid) {
                 emailError.classList.remove('hidden');
                 emailInput.classList.add('border-red-500');
             } else {
+                // Hide error if empty OR valid
                 emailError.classList.add('hidden');
                 emailInput.classList.remove('border-red-500');
             }
@@ -224,6 +232,7 @@
             }
             
             // Re-run field validations to update the UI (errors)
+            // NOTE: These function calls also handle showing/hiding the red error messages
             const isNameFilled = nameInput.value.length > 0;
             const isPhoneValid = validatePhone();
             const isEmailValid = validateEmail();
@@ -253,11 +262,16 @@
             input.addEventListener('input', calculateTotal);
         });
         
+        // All text fields and file input now trigger the full validation and button check on input
         nameInput.addEventListener('input', calculateTotal);
         phoneInput.addEventListener('input', calculateTotal);
         emailInput.addEventListener('input', calculateTotal);
         fileInput.addEventListener('change', calculateTotal); // Use 'change' for file input
         
+        // --- ADDED BLUR LISTENERS FOR BETTER UX FEEDBACK ---
+        phoneInput.addEventListener('blur', validatePhone);
+        emailInput.addEventListener('blur', validateEmail);
+
 
         // Calculate initial total
         calculateTotal();
