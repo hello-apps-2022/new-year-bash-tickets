@@ -333,17 +333,21 @@
 
                 // Assume success if no network error is thrown due to 'no-cors' mode
                 showMessage(
-                    'Success! Your booking request has been submitted. We have received your payment proof. Your ticket will be emailed once payment is manually verified.',
+                    'Success! Your booking request has been submitted. We have received your payment proof. Your ticket will be emailed once payment is manually verified. The form has NOT been cleared so you can view your submitted details.',
                     'bg-green-100 text-green-700 border-green-300'
                 );
-                form.reset();
-                calculateTotal(); // Reset calculations
+                // --- MODIFIED: REMOVED form.reset() ---
+                // form.reset(); 
+                // calculateTotal(); // Only needed if resetting the form
+
             } catch (error) {
                 console.error('Submission Error:', error);
                 // Report error, likely related to Apps Script deployment/permissions
                 showMessage('An error occurred during submission. **IMPORTANT: If your Google Sheet updated but the file did not upload to Drive, please ensure your Google Apps Script is correctly implemented to handle file creation and that it has the necessary Drive permissions.**', 'bg-red-100 text-red-700 border-red-300');
             } finally {
                 submitButton.textContent = 'Submit Booking & Await Verification';
+                // Recalculate to ensure the button is properly disabled if the form was reset, 
+                // but since we removed reset, this mostly serves to re-enable the button state logic.
                 calculateTotal(); 
             }
         });
