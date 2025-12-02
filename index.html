@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Year Bash @ Lalit Mahal - Ticketing</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-lg bg-white shadow-xl rounded-2xl p-6 md:p-8 border border-gray-100">
+
+        <!-- Header and Event Details -->
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-extrabold text-indigo-800 mb-1">New Year Bash</h1>
+            <h2 class="text-xl font-semibold text-gray-700">@ Lalit Mahal, Mysore</h2>
+            <p class="text-sm text-gray-500 mt-2">Dec 31st, 7 PM onwards</p>
+        </header>
+
+        <form id="ticketForm" class="space-y-6">
+
+            <!-- Customer Details -->
+            <div class="space-y-4 border-b pb-4">
+                <h3 class="text-lg font-bold text-gray-800">1. Your Details</h3>
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="name" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                </div>
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" required class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input type="email" id="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                </div>
+            </div>
+
+            <!-- Ticket Selection -->
+            <div class="space-y-4 border-b pb-4">
+                <h3 class="text-lg font-bold text-gray-800">2. Select Tickets</h3>
+
+                <div class="space-y-3">
+                    <!-- Stag Ticket -->
+                    <div class="flex justify-between items-center p-3 bg-indigo-50 rounded-xl">
+                        <div class="flex flex-col">
+                            <span class="font-semibold text-gray-900">Stag Entry (₹3999)</span>
+                            <span class="text-xs text-gray-500">For individual males.</span>
+                        </div>
+                        <input type="number" id="stag_count" name="stag_count" value="0" min="0" max="10" data-price="3999" class="ticket-count w-16 text-center border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <!-- Ladies Ticket -->
+                    <div class="flex justify-between items-center p-3 bg-pink-50 rounded-xl">
+                        <div class="flex flex-col">
+                            <span class="font-semibold text-gray-900">Ladies Entry (₹2499)</span>
+                            <span class="text-xs text-gray-500">For individual females.</span>
+                        </div>
+                        <input type="number" id="lady_count" name="lady_count" value="0" min="0" max="10" data-price="2499" class="ticket-count w-16 text-center border-gray-300 rounded-lg shadow-sm focus:ring-pink-500 focus:border-pink-500">
+                    </div>
+
+                    <!-- Couple Ticket -->
+                    <div class="flex justify-between items-center p-3 bg-green-50 rounded-xl">
+                        <div class="flex flex-col">
+                            <span class="font-semibold text-gray-900">Couple Entry (₹5999)</span>
+                            <span class="text-xs text-gray-500">For one male and one female.</span>
+                        </div>
+                        <input type="number" id="couple_count" name="couple_count" value="0" min="0" max="10" data-price="5999" class="ticket-count w-16 text-center border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500">
+                    </div>
+                </div>
+
+                <!-- Total Amount Display -->
+                <div class="mt-4 pt-3 border-t-2 border-dashed border-gray-200">
+                    <p class="text-xl font-bold flex justify-between items-center text-gray-800">
+                        Total Amount:
+                        <span id="total_amount_display" class="text-indigo-600">₹0</span>
+                    </p>
+                    <input type="hidden" id="total_amount" name="total_amount" value="0">
+                    <input type="hidden" id="total_tickets" name="total_tickets" value="0">
+                </div>
+            </div>
+
+            <!-- Payment Instructions -->
+            <div class="space-y-4 border-b pb-4">
+                <h3 class="text-lg font-bold text-gray-800">3. Manual UPI Payment</h3>
+                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                    <p class="font-bold text-yellow-800 mb-2">Payment Instructions (No Automated Gateway)</p>
+                    <p class="text-sm text-gray-700">Please transfer the **Total Amount** shown above manually using any UPI app (like GPay, PhonePe, or Paytm) to the UPI ID below:</p>
+                    <div class="mt-2 p-2 bg-yellow-100 rounded-lg border border-yellow-300 text-center">
+                        <span class="text-lg font-mono text-yellow-900 font-bold">9663798289@ybl</span>
+                    </div>
+                </div>
+
+                <!-- Payment Screenshot Upload (Not submitted to Apps Script, only for user record) -->
+                <div>
+                    <label for="payment_proof" class="block text-sm font-medium text-gray-700 mb-1">Payment Proof (Optional, for fast verification)</label>
+                    <!-- IMPORTANT: The file upload won't be sent to Google Sheets via this method, but we include the field for customer documentation. The manual verification is the primary method. -->
+                    <input type="file" id="payment_proof" accept="image/*" class="w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-indigo-50 file:text-indigo-700
+                        hover:file:bg-indigo-100
+                    ">
+                </div>
+            </div>
+
+            <!-- Submission and Status -->
+            <div class="pt-4">
+                <button type="submit" id="submitButton" class="w-full py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-300 disabled:opacity-50" disabled>
+                    Submit Booking & Await Verification
+                </button>
+                <div id="statusMessage" class="mt-4 p-3 rounded-lg text-center hidden" role="alert"></div>
+            </div>
+
+        </form>
+
+    </div>
+
+    <script>
+        const UPI_ID = '9663798289@ybl';
+        const APP_SCRIPT_URL = 'YOUR_WEB_APP_URL_HERE'; // *** REPLACE THIS WITH YOUR DEPLOYED WEB APP URL ***
+        const ticketPrices = {
+            stag: 3999,
+            lady: 2499,
+            couple: 5999
+        };
+
+        const ticketCounts = document.querySelectorAll('.ticket-count');
+        const totalAmountDisplay = document.getElementById('total_amount_display');
+        const totalAmountInput = document.getElementById('total_amount');
+        const totalTicketsInput = document.getElementById('total_tickets');
+        const submitButton = document.getElementById('submitButton');
+        const statusMessage = document.getElementById('statusMessage');
+        const form = document.getElementById('ticketForm');
+        
+        // --- Core Calculation Logic ---
+        function calculateTotal() {
+            let total = 0;
+            let totalTickets = 0;
+            let formValid = true;
+
+            ticketCounts.forEach(input => {
+                const count = parseInt(input.value) || 0;
+                const price = parseInt(input.getAttribute('data-price'));
+                total += count * price;
+                totalTickets += count;
+            });
+            
+            // Validation: Must select at least one ticket
+            if (totalTickets === 0) {
+                submitButton.setAttribute('disabled', 'true');
+                formValid = false;
+            } else {
+                 submitButton.removeAttribute('disabled');
+            }
+
+            // Validation: Must fill Name, Phone, Email
+            const nameInput = document.getElementById('name');
+            const phoneInput = document.getElementById('phone');
+            const emailInput = document.getElementById('email');
+
+            if (!nameInput.value || !phoneInput.value || !emailInput.value || totalTickets === 0) {
+                 submitButton.setAttribute('disabled', 'true');
+            } else {
+                 submitButton.removeAttribute('disabled');
+            }
+
+
+            totalAmountDisplay.textContent = `₹${total.toLocaleString('en-IN')}`;
+            totalAmountInput.value = total;
+            totalTicketsInput.value = totalTickets;
+        }
+
+        // Add event listeners for counting
+        ticketCounts.forEach(input => {
+            input.addEventListener('input', calculateTotal);
+            // Also ensure on load, if values are pre-filled, they are calculated
+        });
+        
+        // Add event listeners for text inputs to enable/disable button
+        ['name', 'phone', 'email'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calculateTotal);
+        });
+
+        // Calculate initial total
+        calculateTotal();
+
+
+        // --- Form Submission Logic ---
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            if (APP_SCRIPT_URL === 'YOUR_WEB_APP_URL_HERE') {
+                showMessage('Error: Please deploy the Google Apps Script and update the APP_SCRIPT_URL.', 'bg-red-100 text-red-700 border-red-300');
+                return;
+            }
+
+            submitButton.textContent = 'Submitting...';
+            submitButton.setAttribute('disabled', 'true');
+            showMessage('Submitting your details...', 'bg-indigo-100 text-indigo-700 border-indigo-300');
+            
+            // Gather form data for submission
+            const formData = new FormData(form);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                // Ignore the file input (payment_proof) as files cannot be easily submitted to Apps Script doPost
+                if (key !== 'payment_proof') {
+                    data[key] = value;
+                }
+            }
+            
+            // Format for URL encoding
+            const urlEncodedData = new URLSearchParams(data).toString();
+
+            try {
+                // Submit the data to the Google Apps Script Web App
+                const response = await fetch(APP_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Essential for cross-domain submission to Apps Script
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: urlEncodedData
+                });
+
+                // Since we use 'no-cors', we can't inspect the response content, but a successful fetch usually means the data was sent.
+                showMessage(
+                    'Success! Your booking request has been submitted. Please check your email *after* transferring the amount (₹' + 
+                    totalAmountInput.value.toLocaleString('en-IN') + 
+                    ') to ' + UPI_ID + '. Your ticket will be emailed once payment is manually verified.',
+                    'bg-green-100 text-green-700 border-green-300'
+                );
+                form.reset();
+                calculateTotal(); // Reset calculations
+            } catch (error) {
+                console.error('Submission Error:', error);
+                showMessage('An error occurred during submission. Please try again or check the console.', 'bg-red-100 text-red-700 border-red-300');
+            } finally {
+                submitButton.textContent = 'Submit Booking & Await Verification';
+                submitButton.removeAttribute('disabled');
+            }
+        });
+        
+        function showMessage(message, classes) {
+            statusMessage.textContent = message;
+            statusMessage.className = `mt-4 p-3 rounded-lg text-sm border ${classes}`;
+            statusMessage.classList.remove('hidden');
+        }
+
+    </script>
+</body>
+</html>
