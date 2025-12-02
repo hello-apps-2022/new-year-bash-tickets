@@ -141,6 +141,7 @@
     <script>
         const UPI_ID = '9663798289@ybl';
         // IMPORTANT: Ensure this URL is replaced with your deployed Google Apps Script URL ending in /exec
+        // NOTE: This URL is a placeholder and MUST be updated with your actual deployed Apps Script URL.
         const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbybWFfG7aTWAHpMsZiVv8lvbVVjih6pWAFzNlRfumzX9C_-EMHIHr64oXtLeVqndQxrkQ/exec'; 
         const ticketPrices = {
             stag: 3999,
@@ -225,6 +226,8 @@
             }
 
             const isFileValid = fileInput.files.length > 0;
+            // The file input doesn't "reset" the .files list to null when form.reset() is called, 
+            // but the length is zeroed out by form.reset().
             if (!isFileValid) {
                 fileError.classList.remove('hidden');
             } else {
@@ -348,7 +351,12 @@
                     'Success! Your booking request has been submitted. We have received your payment proof and details. Your e-ticket will be emailed once payment is manually verified on our end.',
                     'bg-green-100 text-green-700 border-green-300'
                 );
-                // The form is deliberately not cleared to allow the user to review their submission.
+                
+                // === IMPLEMENTATION TO CLEAR FORM ===
+                form.reset(); 
+                calculateTotal(); // Recalculate to reset the total amount display and re-run validation checks
+                // ====================================
+
 
             } catch (error) {
                 console.error('Submission Error:', error);
@@ -356,7 +364,7 @@
                 showMessage('An error occurred during submission. Please check your console for details or contact support.', 'bg-red-100 text-red-700 border-red-300');
             } finally {
                 submitButton.textContent = 'Submit Booking & Await Verification';
-                // Recalculate to ensure all validation states (like file input validation) are consistent
+                // Recalculate is still here for error recovery, but the success case now handles reset properly above.
                 calculateTotal(); 
             }
         });
