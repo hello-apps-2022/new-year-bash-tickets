@@ -13,11 +13,7 @@
             font-family: 'Inter', sans-serif;
             background-color: #f7f7f7;
         }
-        /* Custom class for red asterisk */
-        .required-label::after {
-            content: ' *';
-            color: #ef4444; /* red-500 */
-        }
+        /* Removed old .required-label::after CSS */
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
@@ -37,29 +33,32 @@
             <div class="space-y-4 border-b pb-4">
                 <h3 class="text-lg font-bold text-gray-800">1. Your Details</h3>
                 <div>
-                    <!-- Added required-label class -->
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1 required-label">Full Name</label>
+                    <!-- Added manual red asterisk -->
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name<span class="text-red-500">*</span></label>
                     <input type="text" id="name" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
                 </div>
                 <div>
-                    <!-- Added required-label class -->
-                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-1 required-label">Phone Number (10 digits)</label>
+                    <!-- Added manual red asterisk and error element -->
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number (10 digits)<span class="text-red-500">*</span></label>
                     <input type="tel" id="phone" name="phone" required 
                            pattern="[0-9]{10}" 
                            title="Phone number must be exactly 10 digits (0-9)."
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    <p id="phoneError" class="text-xs text-red-500 mt-1 hidden">Please enter exactly 10 digits for the phone number.</p>
                 </div>
                 <div>
-                    <!-- Added required-label class -->
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1 required-label">Email Address</label>
+                    <!-- Added manual red asterisk and error element -->
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address<span class="text-red-500">*</span></label>
                     <input type="email" id="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    <p id="emailError" class="text-xs text-red-500 mt-1 hidden">Please enter a valid email address (e.g., user@domain.com).</p>
                 </div>
             </div>
 
             <!-- Ticket Selection -->
             <div class="space-y-4 border-b pb-4">
-                <!-- Ticket selection is implicitly required by checking totalTickets > 0 -->
-                <h3 class="text-lg font-bold text-gray-800 required-label">2. Select Tickets</h3>
+                <!-- Added manual red asterisk and error element -->
+                <h3 class="text-lg font-bold text-gray-800">2. Select Tickets<span class="text-red-500">*</span></h3>
+                <p id="ticketError" class="text-xs text-red-500 hidden">Please select at least one ticket.</p>
 
                 <div class="space-y-3">
                     <!-- Stag Ticket -->
@@ -114,8 +113,8 @@
 
                 <!-- Payment Screenshot Upload (Now Mandatory) -->
                 <div>
-                    <!-- Added required-label class -->
-                    <label for="payment_proof" class="block text-sm font-medium text-gray-700 mb-1 required-label">Payment Proof (Required for verification)</label>
+                    <!-- Added manual red asterisk and error element -->
+                    <label for="payment_proof" class="block text-sm font-medium text-gray-700 mb-1">Payment Proof (Required for verification)<span class="text-red-500">*</span></label>
                     <input type="file" id="payment_proof" name="payment_proof_file" accept="image/*" required class="w-full text-sm text-gray-500
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-full file:border-0
@@ -123,6 +122,7 @@
                         file:bg-indigo-50 file:text-indigo-700
                         hover:file:bg-indigo-100
                     ">
+                    <p id="fileError" class="text-xs text-red-500 mt-1 hidden">Payment proof file is required.</p>
                 </div>
             </div>
 
@@ -158,8 +158,46 @@
         
         // Regex for strict 10-digit validation
         const phoneRegex = /^[0-9]{10}$/;
+        
+        // Error message elements
+        const phoneError = document.getElementById('phoneError');
+        const emailError = document.getElementById('emailError');
+        const ticketError = document.getElementById('ticketError');
+        const fileError = document.getElementById('fileError');
+        
+        const phoneInput = document.getElementById('phone');
+        const emailInput = document.getElementById('email');
+        const nameInput = document.getElementById('name');
+        const fileInput = document.getElementById('payment_proof'); 
 
-        // --- Core Calculation Logic ---
+        // --- Validation Functions for User Feedback ---
+
+        function validatePhone() {
+            const isValid = phoneRegex.test(phoneInput.value);
+            if (phoneInput.value.length > 0 && !isValid) {
+                phoneError.classList.remove('hidden');
+                phoneInput.classList.add('border-red-500');
+            } else {
+                phoneError.classList.add('hidden');
+                phoneInput.classList.remove('border-red-500');
+            }
+            return isValid;
+        }
+
+        function validateEmail() {
+            // Check HTML5 validity (covers email structure)
+            const isValid = emailInput.checkValidity();
+            if (emailInput.value.length > 0 && !isValid) {
+                emailError.classList.remove('hidden');
+                emailInput.classList.add('border-red-500');
+            } else {
+                emailError.classList.add('hidden');
+                emailInput.classList.remove('border-red-500');
+            }
+            return isValid;
+        }
+
+        // --- Core Calculation & Button Enablement Logic ---
         function calculateTotal() {
             let total = 0;
             let totalTickets = 0;
@@ -170,24 +208,33 @@
                 total += count * price;
                 totalTickets += count;
             });
-            
-            // Validation: Must fill Name, Phone, Email, select tickets, AND upload proof
-            const nameInput = document.getElementById('name');
-            const phoneInput = document.getElementById('phone');
-            const emailInput = document.getElementById('email');
-            const fileInput = document.getElementById('payment_proof'); 
 
-            // Strict JavaScript Phone Validation
-            const isPhoneValid = phoneRegex.test(phoneInput.value); 
-            
-            // Check if all fields are non-empty AND the phone number is valid
-            const textFieldsFilledAndValid = nameInput.value && emailInput.value && isPhoneValid;
+            const isTicketValid = totalTickets > 0;
+            if (!isTicketValid) {
+                ticketError.classList.remove('hidden');
+            } else {
+                ticketError.classList.add('hidden');
+            }
 
-            // Check if all text fields are filled, phone is valid, at least one ticket is selected, and a file is uploaded
+            const isFileValid = fileInput.files.length > 0;
+            if (!isFileValid) {
+                fileError.classList.remove('hidden');
+            } else {
+                fileError.classList.add('hidden');
+            }
+            
+            // Re-run field validations to update the UI (errors)
+            const isNameFilled = nameInput.value.length > 0;
+            const isPhoneValid = validatePhone();
+            const isEmailValid = validateEmail();
+
+            // Final check for form submission enablement
             const isFormValid = 
-                textFieldsFilledAndValid && 
-                totalTickets > 0 && 
-                fileInput.files.length > 0; 
+                isNameFilled && 
+                isPhoneValid && 
+                isEmailValid && 
+                isTicketValid && 
+                isFileValid; 
 
             if (isFormValid) {
                  submitButton.removeAttribute('disabled');
@@ -201,15 +248,16 @@
             totalTicketsInput.value = totalTickets;
         }
 
-        // Add event listeners for counting
+        // Add event listeners for counting, text inputs, and file input
         ticketCounts.forEach(input => {
             input.addEventListener('input', calculateTotal);
         });
         
-        // Add event listeners for text inputs and file input to enable/disable button
-        ['name', 'phone', 'email', 'payment_proof'].forEach(id => {
-            document.getElementById(id).addEventListener('input', calculateTotal);
-        });
+        nameInput.addEventListener('input', calculateTotal);
+        phoneInput.addEventListener('input', calculateTotal);
+        emailInput.addEventListener('input', calculateTotal);
+        fileInput.addEventListener('change', calculateTotal); // Use 'change' for file input
+        
 
         // Calculate initial total
         calculateTotal();
@@ -219,25 +267,13 @@
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
             
-            // Rigorous validation check (to catch cases where the browser native validation might be skipped)
-            const phoneInput = document.getElementById('phone');
-            if (!phoneRegex.test(phoneInput.value)) {
-                 showMessage('Error: Please enter a valid 10-digit phone number.', 'bg-red-100 text-red-700 border-red-300');
+            // Final validation before sending (should mostly pass if button is enabled)
+            if (!validatePhone() || !validateEmail() || parseInt(totalTicketsInput.value) === 0 || fileInput.files.length === 0 || nameInput.value.length === 0) {
+                 showMessage('Error: Please correct the highlighted errors before submitting.', 'bg-red-100 text-red-700 border-red-300');
+                 // Ensure button is disabled if validation fails here
+                 submitButton.setAttribute('disabled', 'true');
                  return;
             }
-
-            const totalTickets = parseInt(document.getElementById('total_tickets').value);
-            const fileInput = document.getElementById('payment_proof');
-            
-            if (totalTickets === 0) {
-                 showMessage('Error: Please select at least one ticket.', 'bg-red-100 text-red-700 border-red-300');
-                 return;
-            }
-            if (fileInput.files.length === 0) {
-                 showMessage('Error: Payment proof file is required.', 'bg-red-100 text-red-700 border-red-300');
-                 return;
-            }
-
 
             submitButton.textContent = 'Submitting...';
             submitButton.setAttribute('disabled', 'true');
@@ -291,7 +327,6 @@
             } catch (error) {
                 console.error('Submission Error:', error);
                 // Report error, likely related to Apps Script deployment/permissions
-                // THIS ERROR MESSAGE COVERS THE FILE UPLOAD FAILURE
                 showMessage('An error occurred during submission. **IMPORTANT: If your Google Sheet updated but the file did not upload to Drive, please ensure your Google Apps Script is correctly implemented to handle file creation and that it has the necessary Drive permissions.**', 'bg-red-100 text-red-700 border-red-300');
             } finally {
                 submitButton.textContent = 'Submit Booking & Await Verification';
