@@ -284,7 +284,6 @@
             // Final validation before sending (should mostly pass if button is enabled)
             if (!validatePhone() || !validateEmail() || parseInt(totalTicketsInput.value) === 0 || fileInput.files.length === 0 || nameInput.value.length === 0) {
                  showMessage('Error: Please correct the highlighted errors before submitting.', 'bg-red-100 text-red-700 border-red-300');
-                 // Ensure button is disabled if validation fails here
                  submitButton.setAttribute('disabled', 'true');
                  return;
             }
@@ -297,63 +296,73 @@
             const file = fileInput.files[0];
 
             
-            // Read the file asynchronously and convert it to Base64
-            const reader = new FileReader();
-            
+            // --- UPDATED FILE READING/BASE64 ENCODING FOR APPS SCRIPT ---
             const fileReadPromise = new Promise((resolve, reject) => {
+                const reader = new FileReader(); // Create reader inside promise scope
+
                 reader.onload = (e) => {
-                    // Extract base64 part and mimeType
-                    const base64Data = e.target.result.split(',')[1];
-                    formData.append('fileData', base64Data);
-                    formData.append('mimeType', file.type);
-                    formData.append('fileName', file.name);
-                    resolve();
+                    try {
+                        // The result is a data URL (e.g., "data:image/png;base64,iVBORw0KGgo...")
+                        // We split by comma to get just the Base64 data (the part after the header)
+                        const base64Data = e.target.result.split(',')[1];
+                        
+                        // Append file metadata and data for Google Apps Script to process
+                        formData.append('fileData', base64Data);
+                        formData.append('mimeType', file.type);
+                        formData.append('fileName', file.name);
+                        
+                        resolve();
+                    } catch (error) {
+                        reject(new Error("Error parsing file data."));
+                    }
                 };
+                
                 reader.onerror = (error) => reject(error);
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(file); // Start reading the file
             });
 
             try {
+                // Wait for the file reading and encoding to complete
                 await fileReadPromise;
             } catch (error) {
-                console.error('File reading error:', error);
-                showMessage('Error reading file. Please try again.', 'bg-red-100 text-red-700 border-red-300');
+                console.error('File processing error:', error);
+                showMessage('Error processing file proof. Please try uploading a different file.', 'bg-red-100 text-red-700 border-red-300');
                 submitButton.textContent = 'Submit Booking & Await Verification';
                 submitButton.removeAttribute('disabled');
                 return;
             }
             
+            // --- API Submission ---
             try {
-                // Submit the raw FormData object. 
+                // Submit the raw FormData object. We use 'no-cors' mode because 
+                // Google Apps Script is a third-party endpoint and doesn't support CORS headers in this context.
+                // We cannot read the server's response (including status or a file link) in this mode.
                 const response = await fetch(APP_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors', 
                     body: formData 
                 });
 
-                // Assume success if no network error is thrown due to 'no-cors' mode
+                // Assume success if no network error is thrown. The GAS script will handle the actual file creation.
                 showMessage(
-                    'Success! Your booking request has been submitted. We have received your payment proof. Your ticket will be emailed once payment is manually verified. The form has NOT been cleared so you can view your submitted details.',
+                    'Success! Your booking request has been submitted. We have received your payment proof and details. Your e-ticket will be emailed once payment is manually verified on our end.',
                     'bg-green-100 text-green-700 border-green-300'
                 );
-                // --- MODIFIED: REMOVED form.reset() ---
-                // form.reset(); 
-                // calculateTotal(); // Only needed if resetting the form
+                // The form is deliberately not cleared to allow the user to review their submission.
 
             } catch (error) {
                 console.error('Submission Error:', error);
-                // Report error, likely related to Apps Script deployment/permissions
-                showMessage('An error occurred during submission. **IMPORTANT: If your Google Sheet updated but the file did not upload to Drive, please ensure your Google Apps Script is correctly implemented to handle file creation and that it has the necessary Drive permissions.**', 'bg-red-100 text-red-700 border-red-300');
+                // Note: The most common failure is a network error before the request is sent, or a deployment issue with the Apps Script.
+                showMessage('An error occurred during submission. Please check your console for details or contact support.', 'bg-red-100 text-red-700 border-red-300');
             } finally {
                 submitButton.textContent = 'Submit Booking & Await Verification';
-                // Recalculate to ensure the button is properly disabled if the form was reset, 
-                // but since we removed reset, this mostly serves to re-enable the button state logic.
+                // Recalculate to ensure all validation states (like file input validation) are consistent
                 calculateTotal(); 
             }
         });
         
         function showMessage(message, classes) {
-            statusMessage.textContent = message;
+            statusMessage.innerHTML = message; // Using innerHTML for bold text in the message
             statusMessage.className = `mt-4 p-3 rounded-lg text-sm border ${classes}`;
             statusMessage.classList.remove('hidden');
         }
